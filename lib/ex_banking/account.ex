@@ -6,7 +6,13 @@ defmodule ExBanking.Account do
   # Client
 
   def start_link(user) do
-    GenServer.start_link(__MODULE__, nil, name: String.to_atom(user))
+    user = String.to_atom(user)
+    if Process.whereis(user) do
+      :user_already_exists
+    else
+      {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user)
+      status
+    end
   end
 
   def init(_) do

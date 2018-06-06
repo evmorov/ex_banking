@@ -6,6 +6,11 @@ defmodule ExBankingTest do
     assert :ok == ExBanking.create_user("Bob")
   end
 
+  test "user_already_exists error" do
+    ExBanking.create_user("Bob")
+    assert :user_already_exists == ExBanking.create_user("Bob")
+  end
+
   test "2 decimal precision" do
     ExBanking.create_user("Bob")
     assert ExBanking.deposit("Bob", 1.2345, "RUB") == 1.23

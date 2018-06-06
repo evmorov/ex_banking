@@ -2,8 +2,7 @@ defmodule ExBanking do
   alias ExBanking.Account
 
   def create_user(user) do
-    {status, pid} = Account.start_link(user)
-    status
+    Account.start_link(user)
   end
 
   def deposit(user, amount, currency) do
