@@ -2,6 +2,17 @@ defmodule ExBankingTest do
   use ExUnit.Case, async: true
   doctest ExBanking
 
+  test "create_user" do
+    assert :ok == ExBanking.create_user("Bob")
+  end
+
+  test "2 decimal precision" do
+    ExBanking.create_user("Bob")
+    assert ExBanking.deposit("Bob", 1.2345, "RUB") == 1.23
+    assert ExBanking.withdraw("Bob", 0.1, "RUB") == 1.13
+    assert ExBanking.get_balance("Bob", "RUB") == 1.13
+  end
+
   test "deposit" do
     ExBanking.create_user("Bob")
     assert ExBanking.deposit("Bob", 100, "RUB") == 100

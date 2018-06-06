@@ -34,14 +34,16 @@ defmodule ExBanking.Account do
   # Server
 
   def handle_call({:deposit, amount, currency}, _from, account) do
-    current_balance = Map.get(account, currency, 0)
+    amount = (amount / 1) |> Float.round(2)
+    current_balance = Map.get(account, currency, 0.0)
     new_balance = current_balance + amount
     account = Map.put(account, currency, new_balance)
     {:reply, new_balance, account}
   end
 
   def handle_call({:withdraw, amount, currency}, _from, account) do
-    current_balance = Map.get(account, currency, 0)
+    amount = (amount / 1) |> Float.round(2)
+    current_balance = Map.get(account, currency, 0.0)
     new_balance = current_balance - amount
     new_balance = if new_balance < 0, do: 0, else: new_balance
     account = Map.put(account, currency, new_balance)
@@ -49,6 +51,7 @@ defmodule ExBanking.Account do
   end
 
   def handle_call({:get_balance, currency}, _from, account) do
-    {:reply, Map.get(account, currency, 0), account}
+    balance = Map.get(account, currency, 0.0)
+    {:reply, balance, account}
   end
 end
