@@ -18,8 +18,6 @@ defmodule ExBanking do
   end
 
   def send(from_user, to_user, amount, currency) do
-    new_balance_from_user = Account.withdraw(from_user, amount, currency)
-    new_balance_to_user = Account.deposit(to_user, amount, currency)
-    {new_balance_from_user, new_balance_to_user}
+    Account.send(from_user, to_user, amount, currency)
   end
 end
