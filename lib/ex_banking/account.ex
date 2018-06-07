@@ -20,15 +20,21 @@ defmodule ExBanking.Account do
   end
 
   def deposit(user, amount, currency) do
-    user
-    |> String.to_atom()
-    |> GenServer.call({:deposit, amount, currency})
+    user = String.to_atom(user)
+    if Process.whereis(user) do
+      GenServer.call(user, {:deposit, amount, currency})
+    else
+      :user_does_not_exist
+    end
   end
 
   def withdraw(user, amount, currency) do
-    user
-    |> String.to_atom()
-    |> GenServer.call({:withdraw, amount, currency})
+    user = String.to_atom(user)
+    if Process.whereis(user) do
+      GenServer.call(user, {:withdraw, amount, currency})
+    else
+      :user_does_not_exist
+    end
   end
 
   def get_balance(user, currency) do
@@ -51,9 +57,12 @@ defmodule ExBanking.Account do
     amount = (amount / 1) |> Float.round(2)
     current_balance = Map.get(account, currency, 0.0)
     new_balance = current_balance - amount
-    new_balance = if new_balance < 0, do: 0, else: new_balance
-    account = Map.put(account, currency, new_balance)
-    {:reply, new_balance, account}
+    if new_balance >= 0 do
+      account = Map.put(account, currency, new_balance)
+      {:reply, new_balance, account}
+    else
+      {:reply, :not_enough_money, account}
+    end
   end
 
   def handle_call({:get_balance, currency}, _from, account) do
