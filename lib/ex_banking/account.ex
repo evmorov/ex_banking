@@ -9,7 +9,7 @@ defmodule ExBanking.Account do
     user = String.to_atom(user)
 
     if Process.whereis(user) do
-      :user_already_exists
+      {:error, :user_already_exists}
     else
       {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user)
       status
@@ -17,7 +17,7 @@ defmodule ExBanking.Account do
   end
 
   def start_link(_user) do
-    :wrong_arguments
+    {:error, :wrong_arguments}
   end
 
   def init(_) do
@@ -31,12 +31,12 @@ defmodule ExBanking.Account do
     if Process.whereis(user) do
       GenServer.call(user, {:deposit, amount, currency})
     else
-      :user_does_not_exist
+      {:error, :user_does_not_exist}
     end
   end
 
   def deposit(_user, _amount, _currency) do
-    :wrong_arguments
+    {:error, :wrong_arguments}
   end
 
   def withdraw(user, amount, currency)
@@ -46,12 +46,12 @@ defmodule ExBanking.Account do
     if Process.whereis(user) do
       GenServer.call(user, {:withdraw, amount, currency})
     else
-      :user_does_not_exist
+      {:error, :user_does_not_exist}
     end
   end
 
   def withdraw(_user, _amount, _currency) do
-    :wrong_arguments
+    {:error, :wrong_arguments}
   end
 
   def get_balance(user, currency) when is_binary(user) and is_binary(currency) do
@@ -61,7 +61,7 @@ defmodule ExBanking.Account do
   end
 
   def get_balance(_user, _currency) do
-    :wrong_arguments
+    {:error, :wrong_arguments}
   end
 
   def send(from_user, to_user, amount, currency)
@@ -69,14 +69,14 @@ defmodule ExBanking.Account do
              is_binary(currency) do
     new_balance_from_user = withdraw(from_user, amount, currency)
 
-    if new_balance_from_user == :user_does_not_exist do
-      :sender_does_not_exist
+    if {:error, :user_does_not_exist} == new_balance_from_user do
+      {:error, :sender_does_not_exist}
     else
       new_balance_to_user = deposit(to_user, amount, currency)
 
-      if new_balance_to_user == :user_does_not_exist do
+      if {:error, :user_does_not_exist} == new_balance_to_user do
         deposit(from_user, amount, currency)
-        :receiver_does_not_exist
+        {:error, :receiver_does_not_exist}
       else
         {new_balance_from_user, new_balance_to_user}
       end
@@ -84,7 +84,7 @@ defmodule ExBanking.Account do
   end
 
   def send(_from_user, _to_user, _amount, _currency) do
-    :wrong_arguments
+    {:error, :wrong_arguments}
   end
 
   # Server
@@ -106,7 +106,7 @@ defmodule ExBanking.Account do
       account = Map.put(account, currency, new_balance)
       {:reply, new_balance, account}
     else
-      {:reply, :not_enough_money, account}
+      {:reply, {:error, :not_enough_money}, account}
     end
   end
 
