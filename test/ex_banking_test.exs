@@ -33,8 +33,8 @@ defmodule ExBankingTest do
       assert ExBanking.get_balance("Bob", "RUB") == 105
       assert ExBanking.deposit("Bob", 3, "USD") == 3
 
-      ExBanking.create_user("Martin")
-      assert ExBanking.deposit("Martin", 66, "RUB") == 66
+      ExBanking.create_user("Ann")
+      assert ExBanking.deposit("Ann", 66, "RUB") == 66
     end
 
     test "money has 2 decimal precision" do
@@ -71,9 +71,9 @@ defmodule ExBankingTest do
       assert ExBanking.withdraw("Bob", 5, "RUB") == 95
       assert ExBanking.get_balance("Bob", "RUB") == 95
 
-      ExBanking.create_user("Martin")
-      assert ExBanking.deposit("Martin", 100, "RUB") == 100
-      assert ExBanking.withdraw("Martin", 50, "RUB") == 50
+      ExBanking.create_user("Ann")
+      assert ExBanking.deposit("Ann", 100, "RUB") == 100
+      assert ExBanking.withdraw("Ann", 50, "RUB") == 50
     end
 
     test "expects input in the defined format" do
@@ -118,40 +118,40 @@ defmodule ExBankingTest do
     test "transfers money from one user to another" do
       ExBanking.create_user("Bob")
       ExBanking.deposit("Bob", 100, "RUB")
-      ExBanking.create_user("Martin")
-      ExBanking.deposit("Martin", 50, "RUB")
+      ExBanking.create_user("Ann")
+      ExBanking.deposit("Ann", 50, "RUB")
 
-      assert ExBanking.send("Bob", "Martin", 10, "RUB") == {90, 60}
+      assert ExBanking.send("Bob", "Ann", 10, "RUB") == {90, 60}
       assert ExBanking.get_balance("Bob", "RUB") == 90
-      assert ExBanking.get_balance("Martin", "RUB") == 60
+      assert ExBanking.get_balance("Ann", "RUB") == 60
     end
 
     test "expects input in the defined format" do
       ExBanking.create_user("Bob")
       ExBanking.deposit("Bob", 100, "RUB")
-      ExBanking.create_user("Martin")
-      ExBanking.deposit("Martin", 50, "RUB")
+      ExBanking.create_user("Ann")
+      ExBanking.deposit("Ann", 50, "RUB")
 
-      assert ExBanking.send(:Bob, "Martin", 10, "RUB") == {:error, :wrong_arguments}
-      assert ExBanking.send("Bob", :Martin, 10, "RUB") == {:error, :wrong_arguments}
-      assert ExBanking.send("Bob", "Martin", "10", "RUB") == {:error, :wrong_arguments}
-      assert ExBanking.send("Bob", "Martin", 10, :RUB) == {:error, :wrong_arguments}
+      assert ExBanking.send(:Bob, "Ann", 10, "RUB") == {:error, :wrong_arguments}
+      assert ExBanking.send("Bob", :Ann, 10, "RUB") == {:error, :wrong_arguments}
+      assert ExBanking.send("Bob", "Ann", "10", "RUB") == {:error, :wrong_arguments}
+      assert ExBanking.send("Bob", "Ann", 10, :RUB) == {:error, :wrong_arguments}
       assert ExBanking.get_balance("Bob", "RUB") == 100
-      assert ExBanking.get_balance("Martin", "RUB") == 50
+      assert ExBanking.get_balance("Ann", "RUB") == 50
     end
 
     test "returns error if sender doesn't exist" do
-      ExBanking.create_user("Martin")
+      ExBanking.create_user("Ann")
 
-      assert ExBanking.send("Bob", "Martin", 10, "RUB") == {:error, :sender_does_not_exist}
-      assert ExBanking.get_balance("Martin", "RUB") == 0
+      assert ExBanking.send("Bob", "Ann", 10, "RUB") == {:error, :sender_does_not_exist}
+      assert ExBanking.get_balance("Ann", "RUB") == 0
     end
 
     test "returns error if receiver doesn't exist" do
       ExBanking.create_user("Bob")
       ExBanking.deposit("Bob", 100, "RUB")
 
-      assert ExBanking.send("Bob", "Martin", 10, "RUB") == {:error, :receiver_does_not_exist}
+      assert ExBanking.send("Bob", "Ann", 10, "RUB") == {:error, :receiver_does_not_exist}
       assert ExBanking.get_balance("Bob", "RUB") == 100
     end
   end
