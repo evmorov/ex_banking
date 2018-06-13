@@ -20,20 +20,20 @@ defmodule ExBanking do
 
   @spec deposit(user :: String.t(), amount :: number, currency :: String.t()) ::
           {:ok, new_balance :: number} | banking_error
-  def deposit(user, amount, currency) do
-    Account.deposit(user, amount, currency)
+  def deposit(user, amount, currency, delay \\ 0) do
+    Account.deposit(user, amount, currency, delay)
   end
 
   @spec withdraw(user :: String.t(), amount :: number, currency :: String.t()) ::
           {:ok, new_balance :: number} | banking_error
-  def withdraw(user, amount, currency) do
-    Account.withdraw(user, amount, currency)
+  def withdraw(user, amount, currency, delay \\ 0) do
+    Account.withdraw(user, amount, currency, delay)
   end
 
   @spec get_balance(user :: String.t(), currency :: String.t()) ::
           {:ok, balance :: number} | banking_error
-  def get_balance(user, currency) do
-    Account.get_balance(user, currency)
+  def get_balance(user, currency, delay \\ 0) do
+    Account.get_balance(user, currency, delay)
   end
 
   @spec send(
@@ -42,7 +42,7 @@ defmodule ExBanking do
           amount :: number,
           currency :: String.t()
         ) :: {:ok, from_user_balance :: number, to_user_balance :: number} | banking_error
-  def send(from_user, to_user, amount, currency) do
-    Account.send(from_user, to_user, amount, currency)
+  def send(from_user, to_user, amount, currency, delay \\ 0) do
+    Account.send(from_user, to_user, amount, currency, delay)
   end
 end

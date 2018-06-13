@@ -150,4 +150,20 @@ defmodule ExBankingTest do
       assert ExBanking.get_balance("Bob", "RUB") == 100
     end
   end
+
+  describe "only limited amount of operations can be in pending state for a user" do
+    test "too_many_requests_to_user error when more then 10 operations" do
+      ExBanking.create_user("Bob")
+
+      limit = 10
+      delay = 100
+      for _ <- 1..limit do
+        spawn fn -> ExBanking.deposit("Bob", 100, "RUB", delay) end
+      end
+
+      Process.sleep delay
+
+      assert ExBanking.get_balance("Bob", "RUB") == 1000
+    end
+  end
 end
