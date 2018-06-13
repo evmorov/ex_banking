@@ -107,6 +107,10 @@ defmodule ExBankingTest do
       assert ExBanking.get_balance(:Bob, "RUB") == {:error, :wrong_arguments}
       assert ExBanking.get_balance("Bob", :RUB) == {:error, :wrong_arguments}
     end
+
+    test "error if user doesn't exist" do
+      assert ExBanking.get_balance("Bob", "RUB") == {:error, :user_does_not_exist}
+    end
   end
 
   describe "send/4" do
@@ -133,13 +137,13 @@ defmodule ExBankingTest do
       assert ExBanking.get_balance("Ann", "RUB") == 50
     end
 
-    test "returns error if sender doesn't exist" do
+    test "error if sender doesn't exist" do
       ExBanking.create_user("Ann")
       assert ExBanking.send("Bob", "Ann", 10, "RUB") == {:error, :sender_does_not_exist}
       assert ExBanking.get_balance("Ann", "RUB") == 0
     end
 
-    test "returns error if receiver doesn't exist" do
+    test "error if receiver doesn't exist" do
       ExBanking.create_user("Bob")
       ExBanking.deposit("Bob", 100, "RUB")
       assert ExBanking.send("Bob", "Ann", 10, "RUB") == {:error, :receiver_does_not_exist}

@@ -53,9 +53,13 @@ defmodule ExBanking.Account do
   end
 
   def get_balance(user, currency) when is_binary(user) and is_binary(currency) do
-    user
-    |> String.to_atom()
-    |> GenServer.call({:get_balance, currency})
+    user = String.to_atom(user)
+
+    if Process.whereis(user) do
+      GenServer.call(user, {:get_balance, currency})
+    else
+      {:error, :user_does_not_exist}
+    end
   end
 
   def get_balance(_user, _currency) do
