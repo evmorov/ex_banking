@@ -42,24 +42,8 @@ defmodule ExBanking.Account do
     {:error, :wrong_arguments}
   end
 
-  defp change_balance(user, amount, currency) do
-    user = String.to_atom(user)
-
-    if Process.whereis(user) do
-      GenServer.call(user, {:change_balance, amount, currency})
-    else
-      {:error, :user_does_not_exist}
-    end
-  end
-
   def get_balance(user, currency) when is_binary(user) and is_binary(currency) do
-    user = String.to_atom(user)
-
-    if Process.whereis(user) do
-      GenServer.call(user, {:get_balance, currency})
-    else
-      {:error, :user_does_not_exist}
-    end
+    send_message(user, {:get_balance, currency})
   end
 
   def get_balance(_user, _currency) do
@@ -89,10 +73,24 @@ defmodule ExBanking.Account do
     {:error, :wrong_arguments}
   end
 
+  defp change_balance(user, amount, currency) do
+    send_message(user, {:change_balance, amount, currency})
+  end
+
+  defp send_message(user, message) do
+    user = String.to_atom(user)
+
+    if Process.whereis(user) do
+      GenServer.call(user, message)
+    else
+      {:error, :user_does_not_exist}
+    end
+  end
+
   # Server
 
   def handle_call({:change_balance, amount, currency}, _from, account) do
-    amount = (amount / 1) |> Float.round(2)
+    amount = Float.round(amount / 1, 2)
     current_balance = Map.get(account, currency, 0.0)
     new_balance = current_balance + amount
 
