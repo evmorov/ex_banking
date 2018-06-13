@@ -42,7 +42,7 @@ defmodule ExBanking.Account do
     {:error, :wrong_arguments}
   end
 
-  def change_balance(user, amount, currency) do
+  defp change_balance(user, amount, currency) do
     user = String.to_atom(user)
 
     if Process.whereis(user) do
@@ -69,15 +69,15 @@ defmodule ExBanking.Account do
   def send(from_user, to_user, amount, currency)
       when is_binary(from_user) and is_binary(to_user) and is_number(amount) and
              is_binary(currency) do
-    new_balance_from_user = change_balance(from_user, amount * -1, currency)
+    new_balance_from_user = withdraw(from_user, amount, currency)
 
     if {:error, :user_does_not_exist} == new_balance_from_user do
       {:error, :sender_does_not_exist}
     else
-      new_balance_to_user = change_balance(to_user, amount, currency)
+      new_balance_to_user = deposit(to_user, amount, currency)
 
       if {:error, :user_does_not_exist} == new_balance_to_user do
-        change_balance(from_user, amount, currency)
+        deposit(from_user, amount, currency)
         {:error, :receiver_does_not_exist}
       else
         {new_balance_from_user, new_balance_to_user}
