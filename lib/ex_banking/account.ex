@@ -1,17 +1,23 @@
 defmodule ExBanking.Account do
   use GenServer
 
-  defstruct(balance: %{})
+  alias ExBanking.AccountQueue
+
+  defstruct(
+    balance: %{}
+  )
 
   # Client
 
   def start_link(user) when is_binary(user) do
-    user = String.to_atom(user)
+    user_atom = String.to_atom(user)
 
-    if Process.whereis(user) do
+    if Process.whereis(user_atom) do
       {:error, :user_already_exists}
     else
-      {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user)
+      # if status bad do not create queue
+      AccountQueue.start_link(user)
+      {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user_atom)
       status
     end
   end
@@ -78,21 +84,34 @@ defmodule ExBanking.Account do
   end
 
   defp send_message(user, message) do
-    IO.inspect [:send_message, user, message]
+    IO.inspect [DateTime.utc_now, :send_message, user, message]
+    user_atom = String.to_atom(user)
 
-    user = String.to_atom(user)
-
-    if Process.whereis(user) do
-      GenServer.call(user, message)
+    if Process.whereis(user_atom) do
+      if increase_operatins_in_queue(user) do
+        reply = GenServer.call(user_atom, message)
+        decrease_operations_in_queue(user)
+        reply
+      else
+        {:error, :too_many_requests_to_user}
+      end
     else
       {:error, :user_does_not_exist}
     end
   end
 
+  defp increase_operatins_in_queue(user) do
+    AccountQueue.increase(user)
+  end
+
+  defp decrease_operations_in_queue(user) do
+    AccountQueue.decrease(user)
+  end
+
   # Server
 
   def handle_call({:change_balance, amount, currency, delay}, _from, account) do
-    IO.inspect [:change_balance, amount, currency, delay]
+    IO.inspect [DateTime.utc_now, :change_balance, amount, currency, delay]
     Process.sleep delay
 
     amount = Float.round(amount / 1, 2)
@@ -108,7 +127,7 @@ defmodule ExBanking.Account do
   end
 
   def handle_call({:get_balance, currency, delay}, _from, account) do
-    IO.inspect [:get_balance, currency, delay]
+    IO.inspect [DateTime.utc_now, :get_balance, currency, delay]
     Process.sleep delay
 
     balance = Map.get(account, currency, 0.0)
