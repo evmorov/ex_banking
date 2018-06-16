@@ -3,9 +3,7 @@ defmodule ExBanking.Account do
 
   alias ExBanking.AccountQueue
 
-  defstruct(
-    balance: %{}
-  )
+  defstruct(balance: %{})
 
   # Client
 
@@ -87,9 +85,9 @@ defmodule ExBanking.Account do
     user_atom = String.to_atom(user)
 
     if Process.whereis(user_atom) do
-      if increase_operatins_in_queue(user) do
+      if AccountQueue.increase(user) do
         reply = GenServer.call(user_atom, message)
-        decrease_operations_in_queue(user)
+        AccountQueue.decrease(user)
         reply
       else
         {:error, :too_many_requests_to_user}
@@ -99,18 +97,10 @@ defmodule ExBanking.Account do
     end
   end
 
-  defp increase_operatins_in_queue(user) do
-    AccountQueue.increase(user)
-  end
-
-  defp decrease_operations_in_queue(user) do
-    AccountQueue.decrease(user)
-  end
-
   # Server
 
   def handle_call({:change_balance, amount, currency, delay}, _from, account) do
-    Process.sleep delay
+    Process.sleep(delay)
 
     amount = Float.round(amount / 1, 2)
     current_balance = Map.get(account, currency, 0.0)
@@ -125,7 +115,7 @@ defmodule ExBanking.Account do
   end
 
   def handle_call({:get_balance, currency, delay}, _from, account) do
-    Process.sleep delay
+    Process.sleep(delay)
 
     balance = Map.get(account, currency, 0.0)
     {:reply, balance, account}
