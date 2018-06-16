@@ -84,7 +84,6 @@ defmodule ExBanking.Account do
   end
 
   defp send_message(user, message) do
-    IO.inspect [DateTime.utc_now, :send_message, user, message]
     user_atom = String.to_atom(user)
 
     if Process.whereis(user_atom) do
@@ -111,7 +110,6 @@ defmodule ExBanking.Account do
   # Server
 
   def handle_call({:change_balance, amount, currency, delay}, _from, account) do
-    IO.inspect [DateTime.utc_now, :change_balance, amount, currency, delay]
     Process.sleep delay
 
     amount = Float.round(amount / 1, 2)
@@ -127,7 +125,6 @@ defmodule ExBanking.Account do
   end
 
   def handle_call({:get_balance, currency, delay}, _from, account) do
-    IO.inspect [DateTime.utc_now, :get_balance, currency, delay]
     Process.sleep delay
 
     balance = Map.get(account, currency, 0.0)

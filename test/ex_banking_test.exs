@@ -155,16 +155,51 @@ defmodule ExBankingTest do
     test "error when more then 10 operations in a pending state for one user" do
       ExBanking.create_user("Bob")
 
+      delay = 100
       limit = 10
-      delay = 500
+
       for _ <- 1..limit do
-        spawn(fn ->
-          assert ExBanking.get_balance("Bob", "RUB", delay) == 0
-        end)
+        spawn(fn -> assert ExBanking.get_balance("Bob", "RUB", delay) == 0 end)
       end
 
-      Process.sleep 100
+      Process.sleep(50)
       assert ExBanking.get_balance("Bob", "RUB") == {:error, :too_many_requests_to_user}
+      Process.sleep(delay)
+      assert ExBanking.get_balance("Bob", "RUB") == 0
+    end
+
+    test "different users has different 10 operations stack" do
+      ExBanking.create_user("Bob")
+      ExBanking.create_user("Ann")
+
+      delay = 100
+      limit = 10
+
+      for _ <- 1..(limit - 1) do
+        spawn(fn -> assert ExBanking.get_balance("Bob", "RUB", delay) == 0 end)
+        spawn(fn -> assert ExBanking.get_balance("Ann", "RUB", delay) == 0 end)
+      end
+
+      Process.sleep(50)
+      assert ExBanking.get_balance("Bob", "RUB") == 0
+      assert ExBanking.get_balance("Ann", "RUB") == 0
+    end
+
+    test "requests for user A should not affect to performance of requests to user B" do
+      ExBanking.create_user("Bob")
+      ExBanking.create_user("Ann")
+
+      delay = 100
+      start_time = :os.system_time(:millisecond)
+
+      spawn(fn -> ExBanking.deposit("Bob", 100, "RUB", delay) end)
+      spawn(fn -> ExBanking.deposit("Ann", 100, "RUB", delay) end)
+
+      Process.sleep(50)
+
+      assert ExBanking.get_balance("Bob", "RUB") == 100
+      assert ExBanking.get_balance("Ann", "RUB") == 100
+      assert :os.system_time(:millisecond) - start_time < delay * 2
     end
   end
 end
