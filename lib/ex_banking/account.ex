@@ -1,7 +1,7 @@
 defmodule ExBanking.Account do
   use GenServer
 
-  alias ExBanking.AccountQueue
+  alias ExBanking.Account.Queue
 
   defstruct(balance: %{})
 
@@ -16,7 +16,7 @@ defmodule ExBanking.Account do
       {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user_atom)
 
       if status == :ok do
-        AccountQueue.start_link(user)
+        Queue.start_link(user)
       end
 
       status
@@ -106,9 +106,9 @@ defmodule ExBanking.Account do
     user_atom = String.to_atom(user)
 
     if Process.whereis(user_atom) do
-      if AccountQueue.increase(user) do
+      if Queue.increase(user) do
         reply = GenServer.call(user_atom, message)
-        AccountQueue.decrease(user)
+        Queue.decrease(user)
         reply
       else
         {:error, :too_many_requests_to_user}

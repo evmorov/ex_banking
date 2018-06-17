@@ -1,4 +1,4 @@
-defmodule ExBanking.AccountQueue do
+defmodule ExBanking.Account.Queue do
   use Agent
 
   @operation_limit 10
