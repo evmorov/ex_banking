@@ -3,8 +3,6 @@ defmodule ExBanking.Account do
 
   alias ExBanking.Account.Queue
 
-  defstruct(balance: %{})
-
   # Client
 
   def start_link(user) when is_binary(user) do
