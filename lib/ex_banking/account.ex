@@ -59,17 +59,35 @@ defmodule ExBanking.Account do
              is_binary(currency) do
     new_balance_from_user = withdraw(from_user, amount, currency, delay)
 
-    if {:error, :user_does_not_exist} == new_balance_from_user do
-      {:error, :sender_does_not_exist}
-    else
-      new_balance_to_user = deposit(to_user, amount, currency, delay)
+    case new_balance_from_user do
+      {:error, :user_does_not_exist} ->
+        {:error, :sender_does_not_exist}
 
-      if {:error, :user_does_not_exist} == new_balance_to_user do
-        deposit(from_user, amount, currency, delay)
-        {:error, :receiver_does_not_exist}
-      else
-        {new_balance_from_user, new_balance_to_user}
-      end
+      {:error, :too_many_requests_to_user} ->
+        {:error, :too_many_requests_to_sender}
+
+      {:error, message} ->
+        {:error, message}
+
+      _ ->
+        new_balance_to_user = deposit(to_user, amount, currency, delay)
+
+        case new_balance_to_user do
+          {:error, :user_does_not_exist} ->
+            deposit(from_user, amount, currency, delay)
+            {:error, :receiver_does_not_exist}
+
+          {:error, :too_many_requests_to_user} ->
+            deposit(from_user, amount, currency, delay)
+            {:error, :too_many_requests_to_receiver}
+
+          {:error, message} ->
+            deposit(from_user, amount, currency, delay)
+            {:error, message}
+
+          _ ->
+            {new_balance_from_user, new_balance_to_user}
+        end
     end
   end
 

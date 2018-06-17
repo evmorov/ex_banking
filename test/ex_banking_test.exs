@@ -201,5 +201,35 @@ defmodule ExBankingTest do
       assert ExBanking.get_balance("Ann", "RUB") == 100
       assert :os.system_time(:millisecond) - start_time < delay * 2
     end
+
+    test ":too_many_requests_to_sender error" do
+      ExBanking.create_user("Bob")
+      ExBanking.create_user("Ann")
+
+      delay = 100
+      limit = 10
+
+      for _ <- 1..limit do
+        spawn(fn -> assert ExBanking.get_balance("Bob", "RUB", delay) == 0 end)
+      end
+
+      Process.sleep(50)
+      assert ExBanking.send("Ann", "Bob", 0, "RUB") == {:error, :too_many_requests_to_receiver}
+    end
+
+    test ":too_many_requests_to_receiver error" do
+      ExBanking.create_user("Bob")
+      ExBanking.create_user("Ann")
+
+      delay = 100
+      limit = 10
+
+      for _ <- 1..limit do
+        spawn(fn -> assert ExBanking.get_balance("Bob", "RUB", delay) == 0 end)
+      end
+
+      Process.sleep(50)
+      assert ExBanking.send("Bob", "Ann", 0, "RUB") == {:error, :too_many_requests_to_sender}
+    end
   end
 end
