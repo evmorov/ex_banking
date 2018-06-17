@@ -13,9 +13,12 @@ defmodule ExBanking.Account do
     if Process.whereis(user_atom) do
       {:error, :user_already_exists}
     else
-      # if status bad do not create queue
-      AccountQueue.start_link(user)
       {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user_atom)
+
+      if status == :ok do
+        AccountQueue.start_link(user)
+      end
+
       status
     end
   end
