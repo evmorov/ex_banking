@@ -93,23 +93,23 @@ defmodule ExBanking.Account do
     {:error, :wrong_arguments}
   end
 
-  defp send_message(user, message) when is_binary(user) do
-    send_message(account_name(user), message)
-  end
-
-  defp send_message(account_name, message) do
-    if Process.whereis(account_name) do
-      case Mailbox.increase(account_name) do
-        {:ok, _} ->
-          reply = GenServer.call(account_name, message)
-          Mailbox.decrease(account_name)
-          reply
-
-        error = {:error, _} ->
-          error
-      end
+  defp send_message(user, message) do
+    if Process.whereis(account_name(user)) do
+      send_message_for_existing_account(account_name(user), message)
     else
       {:error, :user_does_not_exist}
+    end
+  end
+
+  defp send_message_for_existing_account(account_name, message) do
+    case Mailbox.increase(account_name) do
+      {:ok, _} ->
+        reply = GenServer.call(account_name, message)
+        Mailbox.decrease(account_name)
+        reply
+
+      error = {:error, _} ->
+        error
     end
   end
 
