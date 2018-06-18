@@ -67,8 +67,8 @@ defmodule ExBanking.Account do
       {:error, :too_many_requests_to_user} ->
         {:error, :too_many_requests_to_sender}
 
-      {:error, message} ->
-        {:error, message}
+      err = {:error, _} ->
+        err
 
       _ ->
         new_balance_to_user = deposit(to_user, amount, currency, delay)
@@ -82,9 +82,9 @@ defmodule ExBanking.Account do
             deposit(from_user, amount, currency, delay)
             {:error, :too_many_requests_to_receiver}
 
-          {:error, message} ->
+          err = {:error, _} ->
             deposit(from_user, amount, currency, delay)
-            {:error, message}
+            err
 
           _ ->
             {new_balance_from_user, new_balance_to_user}
@@ -104,12 +104,13 @@ defmodule ExBanking.Account do
     user = String.to_atom(user)
 
     if Process.whereis(user) do
-      if Mailbox.increase(user) do
-        reply = GenServer.call(user, message)
-        Mailbox.decrease(user)
-        reply
-      else
-        {:error, :too_many_requests_to_user}
+      case Mailbox.increase(user) do
+        err = {:error, _} ->
+          err
+        _ ->
+          reply = GenServer.call(user, message)
+          Mailbox.decrease(user)
+          reply
       end
     else
       {:error, :user_does_not_exist}

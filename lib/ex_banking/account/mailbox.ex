@@ -11,7 +11,7 @@ defmodule ExBanking.Account.Mailbox do
         updated_length = length + 1
         {updated_length, updated_length}
       else
-        {nil, length}
+        {{:error, :too_many_requests_to_user}, length}
       end
     end)
   end
