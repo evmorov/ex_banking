@@ -1,6 +1,4 @@
 defmodule ExBanking.Account.Mailbox do
-  use Agent
-
   @limit 10
 
   def start_link(user) do
