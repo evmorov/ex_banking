@@ -97,12 +97,12 @@ defmodule ExBanking.Account do
     send_message(account_name(user), message)
   end
 
-  defp send_message(user, message) do
-    if Process.whereis(user) do
-      case Mailbox.increase(user) do
+  defp send_message(account_name, message) do
+    if Process.whereis(account_name) do
+      case Mailbox.increase(account_name) do
         {:ok, _} ->
-          reply = GenServer.call(user, message)
-          Mailbox.decrease(user)
+          reply = GenServer.call(account_name, message)
+          Mailbox.decrease(account_name)
           reply
 
         error = {:error, _} ->
