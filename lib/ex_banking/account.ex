@@ -31,7 +31,7 @@ defmodule ExBanking.Account do
 
   def deposit(user, amount, currency, delay)
       when is_binary(user) and is_number(amount) and is_binary(currency) do
-    change_balance(user, amount, currency, delay)
+    send_message(user, {:change_balance, amount, currency, delay})
   end
 
   def deposit(_user, _amount, _currency, _delay) do
@@ -40,7 +40,7 @@ defmodule ExBanking.Account do
 
   def withdraw(user, amount, currency, delay)
       when is_binary(user) and is_number(amount) and is_binary(currency) do
-    change_balance(user, amount * -1, currency, delay)
+    send_message(user, {:change_balance, amount * -1, currency, delay})
   end
 
   def withdraw(_user, _amount, _currency, _delay) do
@@ -98,13 +98,11 @@ defmodule ExBanking.Account do
     {:error, :wrong_arguments}
   end
 
-  defp change_balance(user, amount, currency, delay) do
-    send_message(user, {:change_balance, amount, currency, delay})
+  defp send_message(user, message) when is_binary(user) do
+    send_message(String.to_atom(user), message)
   end
 
   defp send_message(user, message) do
-    user = String.to_atom(user)
-
     if Process.whereis(user) do
       with {:ok, _} <- Mailbox.increase(user) do
         reply = GenServer.call(user, message)
