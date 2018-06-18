@@ -6,18 +6,13 @@ defmodule ExBanking.Account do
   # Client
 
   def start_link(user) when is_binary(user) do
-    user = String.to_atom(user)
+    case GenServer.start_link(__MODULE__, nil, name: account_name(user)) do
+      {:ok, _pid} ->
+        Mailbox.start_link(account_name(user))
+        :ok
 
-    if Process.whereis(user) do
-      {:error, :user_already_exists}
-    else
-      {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user)
-
-      if status == :ok do
-        Mailbox.start_link(user)
-      end
-
-      status
+      {:error, {:already_started, _pid}} ->
+        {:error, :user_already_exists}
     end
   end
 
@@ -99,19 +94,27 @@ defmodule ExBanking.Account do
   end
 
   defp send_message(user, message) when is_binary(user) do
-    send_message(String.to_atom(user), message)
+    send_message(account_name(user), message)
   end
 
   defp send_message(user, message) do
     if Process.whereis(user) do
-      with {:ok, _} <- Mailbox.increase(user) do
-        reply = GenServer.call(user, message)
-        Mailbox.decrease(user)
-        reply
+      case Mailbox.increase(user) do
+        {:ok, _} ->
+          reply = GenServer.call(user, message)
+          Mailbox.decrease(user)
+          reply
+
+        error = {:error, _} ->
+          error
       end
     else
       {:error, :user_does_not_exist}
     end
+  end
+
+  defp account_name(user) do
+    String.to_atom(user)
   end
 
   # Server
