@@ -62,9 +62,6 @@ defmodule ExBanking.Account do
       {:error, :too_many_requests_to_user} ->
         {:error, :too_many_requests_to_sender}
 
-      err = {:error, _} ->
-        err
-
       _ ->
         new_balance_to_user = deposit(to_user, amount, currency, delay)
 
