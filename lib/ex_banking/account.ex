@@ -51,43 +51,38 @@ defmodule ExBanking.Account do
   end
 
   def send(from_user, to_user, amount, currency, delay)
-      when is_binary(from_user) and is_binary(to_user) and is_number(amount) and
-             is_binary(currency) do
+      when is_binary(from_user) and is_binary(to_user) and is_number(amount) and is_binary(currency) do
     new_balance_from_user = withdraw(from_user, amount, currency, delay)
 
     case new_balance_from_user do
-      {:error, :user_does_not_exist} ->
-        {:error, :sender_does_not_exist}
-
-      {:error, :too_many_requests_to_user} ->
-        {:error, :too_many_requests_to_sender}
-
-      _ ->
-        new_balance_to_user = deposit(to_user, amount, currency, delay)
-
-        case new_balance_to_user do
-          {:error, message} ->
-            deposit(from_user, amount, currency, delay)
-
-            case message do
-              :user_does_not_exist ->
-                {:error, :receiver_does_not_exist}
-
-              :too_many_requests_to_user ->
-                {:error, :too_many_requests_to_receiver}
-
-              message ->
-                message
-            end
-
-          _ ->
-            {new_balance_from_user, new_balance_to_user}
-        end
+      {:error, :user_does_not_exist} -> {:error, :sender_does_not_exist}
+      {:error, :too_many_requests_to_user} -> {:error, :too_many_requests_to_sender}
+      err = {:error, _} -> err
+      _ -> send_withdrawn(from_user, to_user, amount, currency, new_balance_from_user, delay)
     end
   end
 
   def send(_from_user, _to_user, _amount, _currency, _delay) do
     {:error, :wrong_arguments}
+  end
+
+  defp send_withdrawn(from_user, to_user, amount, currency, new_balance_from_user, delay) do
+    new_balance_to_user = deposit(to_user, amount, currency, delay)
+
+    case new_balance_to_user do
+      {:error, message} ->
+        # return money back
+        deposit(from_user, amount, currency, delay)
+
+        case message do
+          :user_does_not_exist -> {:error, :receiver_does_not_exist}
+          :too_many_requests_to_user -> {:error, :too_many_requests_to_receiver}
+          message -> message
+        end
+
+      _ ->
+        {new_balance_from_user, new_balance_to_user}
+    end
   end
 
   defp send_message(user, message) do
