@@ -74,17 +74,19 @@ defmodule ExBanking.Account do
         new_balance_to_user = deposit(to_user, amount, currency, delay)
 
         case new_balance_to_user do
-          {:error, :user_does_not_exist} ->
+          {:error, message} ->
             deposit(from_user, amount, currency, delay)
-            {:error, :receiver_does_not_exist}
 
-          {:error, :too_many_requests_to_user} ->
-            deposit(from_user, amount, currency, delay)
-            {:error, :too_many_requests_to_receiver}
+            case message do
+              :user_does_not_exist ->
+                {:error, :receiver_does_not_exist}
 
-          err = {:error, _} ->
-            deposit(from_user, amount, currency, delay)
-            err
+              :too_many_requests_to_user ->
+                {:error, :too_many_requests_to_receiver}
+
+              message ->
+                message
+            end
 
           _ ->
             {new_balance_from_user, new_balance_to_user}
@@ -107,6 +109,7 @@ defmodule ExBanking.Account do
       case Mailbox.increase(user) do
         err = {:error, _} ->
           err
+
         _ ->
           reply = GenServer.call(user, message)
           Mailbox.decrease(user)
