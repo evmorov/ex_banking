@@ -9,7 +9,7 @@ defmodule ExBanking.Account.Mailbox do
     Agent.get_and_update(mailbox_name(user), fn length ->
       if length < @limit do
         updated_length = length + 1
-        {updated_length, updated_length}
+        {{:ok, updated_length}, updated_length}
       else
         {{:error, :too_many_requests_to_user}, length}
       end

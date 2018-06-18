@@ -106,14 +106,10 @@ defmodule ExBanking.Account do
     user = String.to_atom(user)
 
     if Process.whereis(user) do
-      case Mailbox.increase(user) do
-        err = {:error, _} ->
-          err
-
-        _ ->
-          reply = GenServer.call(user, message)
-          Mailbox.decrease(user)
-          reply
+      with {:ok, _} <- Mailbox.increase(user) do
+        reply = GenServer.call(user, message)
+        Mailbox.decrease(user)
+        reply
       end
     else
       {:error, :user_does_not_exist}
