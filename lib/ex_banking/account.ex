@@ -1,20 +1,20 @@
 defmodule ExBanking.Account do
   use GenServer
 
-  alias ExBanking.Account.Queue
+  alias ExBanking.Account.Mailbox
 
   # Client
 
   def start_link(user) when is_binary(user) do
-    user_atom = String.to_atom(user)
+    user = String.to_atom(user)
 
-    if Process.whereis(user_atom) do
+    if Process.whereis(user) do
       {:error, :user_already_exists}
     else
-      {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user_atom)
+      {status, _pid} = GenServer.start_link(__MODULE__, nil, name: user)
 
       if status == :ok do
-        Queue.start_link(user)
+        Mailbox.start_link(user)
       end
 
       status
@@ -101,12 +101,12 @@ defmodule ExBanking.Account do
   end
 
   defp send_message(user, message) do
-    user_atom = String.to_atom(user)
+    user = String.to_atom(user)
 
-    if Process.whereis(user_atom) do
-      if Queue.increase(user) do
-        reply = GenServer.call(user_atom, message)
-        Queue.decrease(user)
+    if Process.whereis(user) do
+      if Mailbox.increase(user) do
+        reply = GenServer.call(user, message)
+        Mailbox.decrease(user)
         reply
       else
         {:error, :too_many_requests_to_user}
@@ -118,25 +118,25 @@ defmodule ExBanking.Account do
 
   # Server
 
-  def handle_call({:change_balance, amount, currency, delay}, _from, account) do
-    Process.sleep(delay)
-
-    amount = Float.round(amount / 1, 2)
-    current_balance = Map.get(account, currency, 0.0)
-    new_balance = current_balance + amount
-
-    if new_balance >= 0 do
-      account = Map.put(account, currency, new_balance)
-      {:reply, new_balance, account}
-    else
-      {:reply, {:error, :not_enough_money}, account}
-    end
-  end
-
   def handle_call({:get_balance, currency, delay}, _from, account) do
     Process.sleep(delay)
 
     balance = Map.get(account, currency, 0.0)
     {:reply, balance, account}
+  end
+
+  def handle_call({:change_balance, amount, currency, delay}, _from, account) do
+    Process.sleep(delay)
+
+    new_balance = Map.get(account, currency, 0.0) + Float.round(amount / 1, 2)
+    change_balance(account, currency, new_balance)
+  end
+
+  defp change_balance(account, currency, new_balance) when new_balance >= 0 do
+    {:reply, new_balance, Map.put(account, currency, new_balance)}
+  end
+
+  defp change_balance(account, _currency, _new_balance) do
+    {:reply, {:error, :not_enough_money}, account}
   end
 end
