@@ -7,11 +7,8 @@ defmodule ExBanking.Account do
 
   def start_link(user) when is_binary(user) do
     case GenServer.start_link(__MODULE__, account_name(user), name: account_name(user)) do
-      {:ok, _pid} ->
-        :ok
-
-      {:error, {:already_started, _pid}} ->
-        {:error, :user_already_exists}
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> {:error, :user_already_exists}
     end
   end
 
@@ -20,8 +17,7 @@ defmodule ExBanking.Account do
   end
 
   def init(account_name) do
-    QueueLength.start_link(account_name)
-    {:ok, %{}}
+    with {:ok, _pid} <- QueueLength.start_link(account_name), do: {:ok, %{}}
   end
 
   def deposit(user, amount, currency, delay)
