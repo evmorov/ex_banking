@@ -6,9 +6,8 @@ defmodule ExBanking.Account do
   # Client
 
   def start_link(user) when is_binary(user) do
-    case GenServer.start_link(__MODULE__, nil, name: account_name(user)) do
+    case GenServer.start_link(__MODULE__, account_name(user), name: account_name(user)) do
       {:ok, _pid} ->
-        QueueLength.start_link(account_name(user))
         :ok
 
       {:error, {:already_started, _pid}} ->
@@ -20,7 +19,8 @@ defmodule ExBanking.Account do
     {:error, :wrong_arguments}
   end
 
-  def init(_) do
+  def init(account_name) do
+    QueueLength.start_link(account_name)
     {:ok, %{}}
   end
 
