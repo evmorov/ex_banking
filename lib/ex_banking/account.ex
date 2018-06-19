@@ -1,14 +1,14 @@
 defmodule ExBanking.Account do
   use GenServer
 
-  alias ExBanking.Account.Mailbox
+  alias ExBanking.Account.QueueLength
 
   # Client
 
   def start_link(user) when is_binary(user) do
     case GenServer.start_link(__MODULE__, nil, name: account_name(user)) do
       {:ok, _pid} ->
-        Mailbox.start_link(account_name(user))
+        QueueLength.start_link(account_name(user))
         :ok
 
       {:error, {:already_started, _pid}} ->
@@ -94,10 +94,10 @@ defmodule ExBanking.Account do
   end
 
   defp send_message_for_existing_account(account_name, message) do
-    case Mailbox.increase(account_name) do
+    case QueueLength.increase(account_name) do
       {:ok, _} ->
         reply = GenServer.call(account_name, message)
-        Mailbox.decrease(account_name)
+        QueueLength.decrease(account_name)
         reply
 
       error = {:error, _} ->
