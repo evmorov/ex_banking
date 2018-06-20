@@ -90,14 +90,10 @@ defmodule ExBanking.Account do
   end
 
   defp send_message_for_existing_account(account_name, message) do
-    case QueueLength.increase(account_name) do
-      {:ok, _} ->
-        reply = GenServer.call(account_name, message)
-        QueueLength.decrease(account_name)
-        reply
-
-      error = {:error, _} ->
-        error
+    with {:ok, _} <- QueueLength.increase(account_name) do
+      reply = GenServer.call(account_name, message)
+      QueueLength.decrease(account_name)
+      reply
     end
   end
 
