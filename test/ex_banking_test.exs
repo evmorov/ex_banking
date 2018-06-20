@@ -1,6 +1,5 @@
 defmodule ExBankingTest do
   use ExUnit.Case, async: true
-  doctest ExBanking
 
   describe "create_user/1" do
     test "creates a user" do
